@@ -1,7 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools} from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture} from "@babylonjs/core";
 
 
 class App {
@@ -18,18 +18,40 @@ class App {
         //var sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene);
         //sphere.position.y = 0.5
 
-        let box = MeshBuilder.CreateBox("box", {width: 2, height: 1.5, depth: 3}, scene);
-        box.position = new Vector3(-2, 4.2, 0.1);
-        box.rotation.y = Math.PI / 4;
+        let box = MeshBuilder.CreateBox("box", {}, scene);
+        //box.position = new Vector3(-2, 4.2, 0.1);
+        box.position.y = 0.5;
+        box.rotation.y = Tools.ToRadians(90);
+
+        let boxMat = new StandardMaterial("boxMat", scene);
+        boxMat.diffuseTexture = new Texture("https://www.babylonjs-playground.com/textures/floor.png", scene);
+        box.material = boxMat;
+
+        let roof = MeshBuilder.CreateCylinder("roof", {diameter: 1.3, height: 1.2, tessellation: 3});
+        roof.scaling.x = 0.75;
+        roof.rotation.z = Math.PI / 2;
+        roof.position.y = 1.22;
+
+        let roofMat = new StandardMaterial("roofMat", scene);
+        roofMat.diffuseTexture = new Texture("https://assets.babylonjs.com/environments/roof.jpg", scene);
+        roof.material = roofMat;
 
         // setInterval(()=>{
         //     box.rotation.z = Tools.ToRadians(Tools.ToDegrees(box.rotation.z) + 0.5)
         // }, 33)
+
+
         this.createButton(box);
 
         //adding ground
         let ground = MeshBuilder.CreateGround('ground', {width: 10, height: 10}, scene);
         let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true, volume: 0.1});
+
+        let groundMat = new StandardMaterial("groundMat", scene);
+        groundMat.diffuseColor = new Color3(0,1,0);
+        groundMat.backFaceCulling = false;
+        ground.material = groundMat;
+
 
         
         this.addInspectorEventListener(scene)
