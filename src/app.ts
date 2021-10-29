@@ -18,7 +18,7 @@ class App {
         sphere.position.y = 0.5
         //adding ground
         let ground = MeshBuilder.CreateGround('ground', {width: 10, height: 10}, scene);
-        let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true});
+        let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true, volume: 0.1});
 
         
         this.addInspectorEventListener(scene)
