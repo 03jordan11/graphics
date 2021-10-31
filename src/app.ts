@@ -1,8 +1,9 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4} from "@babylonjs/core";
-
+//import "@babylonjs/loaders/glTF";
+import 'babylonjs-loaders';
+import * as earcut from 'earcut';
+import { Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
 
 class App {
     constructor() {
@@ -12,12 +13,19 @@ class App {
         var engine = new Engine(canvas, true);
         var scene = new Scene(engine);
 
-        var camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene);
-        camera.attachControl(canvas, true);
+        let uniCam = new UniversalCamera("Universal Camera", new Vector3(1, 1, 1), scene);
+        uniCam.target = Vector3.Zero();
+        uniCam.attachControl(canvas, true);
+        uniCam.speed = uniCam.speed/10
+
+        // var camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene);
+        // camera.attachControl(canvas, true);
         var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
 
         let ground = this.createGround(scene);
         this.createTown(scene);
+        this.createCar(scene);
+        this.createMesh('t', 't', scene, engine);
 
         this.addInspectorEventListener(scene)
 
@@ -26,7 +34,136 @@ class App {
             scene.render();
         });
     }
+    createMesh(objFile: string, texture: string, scene: Scene, engine: Engine){
+        let assetManager = new AssetsManager(scene);
+        let meshTask = assetManager.addMeshTask('ballon task', '', '/assets/models/', 'airBalloon.obj');
+        meshTask.onSuccess = (task) => {
+            for(let i = 0; i < task.loadedMeshes.length; i++){
+                task.loadedMeshes[i].scaling = new Vector3(.005, .005, .005); 
+            }
+            //let baloonMesh = task.loadedMeshes[0];
+        }
+        assetManager.load();
+        //SceneLoader.ImportMesh("airBalloon", "/assets/models/", "airBaloon.obj", scene);
 
+        // SceneLoader.ImportMeshAsync("airBalloon", "/assets/models/", "airBalloon.obj", scene).then((result)=>{
+        //     debugger;
+        //     let dude = result.meshes[0];
+        //     dude._scene = scene;
+        //     dude.scaling = new Vector3(0.25, 0.25, 0.25);
+        // });
+    }
+
+    createCar(scene: Scene){
+        //base
+        const outline = [
+            new Vector3(-0.3, 0, -0.1),
+            new Vector3(0.2, 0, -0.1),
+        ]
+
+        //curved front
+        for (let i = 0; i < 20; i++) {
+            outline.push(new Vector3(0.2 * Math.cos(i * Math.PI / 40), 0, 0.2 * Math.sin(i * Math.PI / 40) - 0.1));
+        }
+
+        //top
+        outline.push(new Vector3(0, 0, 0.1));
+        outline.push(new Vector3(-0.3, 0, 0.1));
+
+        //faceUV
+        let carFaceUV = [];
+        carFaceUV[0] = new Vector4(0, 0.5, 0.38, 1);
+        carFaceUV[1] = new Vector4(0, 0, 1, 0.5);
+        carFaceUV[2] = new Vector4(0.38, 1, 0, 0.5);
+
+        let car = MeshBuilder.ExtrudePolygon("car", {shape: outline, faceUV: carFaceUV, depth: 0.2}, scene, earcut)
+
+        //adding material to car
+        let carMat = new StandardMaterial("carMat", scene);
+        carMat.diffuseTexture = new Texture("/assets/textures/car.webp", scene);
+
+        car.material = carMat;
+
+        //faceUV for wheel
+        let wheelFaceUV = [];
+        wheelFaceUV[0] = new Vector4(0,0,1,1);
+        wheelFaceUV[1] = new Vector4(0,0.5,0,0.5);
+        wheelFaceUV[2] = new Vector4(0,0,1,1);
+
+        const wheelRB = MeshBuilder.CreateCylinder("wheelRB", {diameter: 0.125, height: 0.05, faceUV: wheelFaceUV}, scene)
+        wheelRB.parent = car;
+        wheelRB.position.z = -0.1;
+        wheelRB.position.x = -0.2;
+        wheelRB.position.y = 0.035;
+
+        const wheelRF = wheelRB.clone("wheelRF");
+        wheelRF.position.x = 0.1;
+
+        const wheelLB = wheelRB.clone("wheelLB");
+        wheelLB.position.y = -0.2 - 0.035;
+
+        const wheelLF = wheelRF.clone("wheelLF");
+        wheelLF.position.y = -0.2 - 0.035;
+
+        //adding material to wheels
+        let wheelMat = new StandardMaterial("wheelMat", scene);
+        wheelMat.diffuseTexture = new Texture("/assets/textures/wheel.webp", scene); 
+
+        wheelRB.material = wheelMat;
+        wheelRF.material = wheelMat;
+        wheelLF.material = wheelMat;
+        wheelLB.material = wheelMat;
+
+        //rotating car
+        car.rotation.x = 3*Math.PI/2 ;
+        car.position.y = 0.2
+
+        //animating wheels
+        this.animateWheel(wheelRB, scene);
+        this.animateWheel(wheelRF, scene);
+        this.animateWheel(wheelLB, scene);
+        this.animateWheel(wheelLF, scene);
+        this.animateCar(car, scene);
+
+    }
+    animateCar(car: Mesh, scene: Scene){
+        let animCar = new Animation('carAnimation', 'position.x', 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+        let carKeys = []
+        carKeys.push({
+            frame: 0, value: -4
+        },
+        {
+            frame: 150, value: 4
+        },
+        {
+            frame: 210, value: 4
+        });
+
+        animCar.setKeys(carKeys);
+        car.animations = []
+        car.animations.push(animCar);
+
+        scene.beginAnimation(car, 0, 210, true);
+    }
+    animateWheel(wheel: Mesh, scene: Scene){
+        let animWheel = new Animation("wheelAnimation", "rotation.y", 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
+        let wheelKeys = [];
+        wheelKeys.push({
+            frame: 0,
+            value: 0
+        },
+        {
+            frame: 30,
+            value: 2 * Math.PI
+        });
+
+        animWheel.setKeys(wheelKeys);
+
+        wheel.animations = [];
+        wheel.animations.push(animWheel);
+
+        scene.beginAnimation(wheel,0,30,true);
+    }
     createTown(scene: Scene) {
 
         const detached_house = this.createHouse(1, scene);
@@ -152,7 +289,5 @@ class App {
 
         return canvas;
     }
-
-
 }
 new App();
