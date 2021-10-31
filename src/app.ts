@@ -3,7 +3,7 @@ import "@babylonjs/inspector";
 //import "@babylonjs/loaders/glTF";
 import 'babylonjs-loaders';
 import * as earcut from 'earcut';
-import { Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
+import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
 
 class App {
     constructor() {
@@ -18,14 +18,14 @@ class App {
         uniCam.attachControl(canvas, true);
         uniCam.speed = uniCam.speed/10
 
-        // var camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene);
-        // camera.attachControl(canvas, true);
         var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
 
         let ground = this.createGround(scene);
         this.createTown(scene);
         this.createCar(scene);
-        this.createMesh('t', 't', scene, engine);
+        let hotAirBalloon = this.createMesh('airBalloon.obj', 't', scene, engine);
+        //hotAirBalloon.movePOV(0, 0,500);
+        //hotAirBalloon.position.y = 10;
 
         this.addInspectorEventListener(scene)
 
@@ -34,24 +34,22 @@ class App {
             scene.render();
         });
     }
-    createMesh(objFile: string, texture: string, scene: Scene, engine: Engine){
+    createMesh(objFile: string, texture: string, scene: Scene, engine: Engine): AbstractMesh{
+        let object: AbstractMesh;
         let assetManager = new AssetsManager(scene);
-        let meshTask = assetManager.addMeshTask('ballon task', '', '/assets/models/', 'airBalloon.obj');
+        let meshTask = assetManager.addMeshTask('ballon task', '', '/assets/models/', objFile);
+
         meshTask.onSuccess = (task) => {
+            object = task.loadedMeshes[0];
             for(let i = 0; i < task.loadedMeshes.length; i++){
-                task.loadedMeshes[i].scaling = new Vector3(.005, .005, .005); 
-            }
-            //let baloonMesh = task.loadedMeshes[0];
+                if(i != 0) task.loadedMeshes[i].parent = task.loadedMeshes[0];
+            };
+            object.scaling = new Vector3(.005, .005, .005);
+            object.position.y = 4.0;
         }
         assetManager.load();
-        //SceneLoader.ImportMesh("airBalloon", "/assets/models/", "airBaloon.obj", scene);
-
-        // SceneLoader.ImportMeshAsync("airBalloon", "/assets/models/", "airBalloon.obj", scene).then((result)=>{
-        //     debugger;
-        //     let dude = result.meshes[0];
-        //     dude._scene = scene;
-        //     dude.scaling = new Vector3(0.25, 0.25, 0.25);
-        // });
+        //let temp = new Mesh("abc", scene, null, object);
+        return object;
     }
 
     createCar(scene: Scene){
