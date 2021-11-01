@@ -322,13 +322,6 @@ class App {
         canvas.style.height = "100%";
         canvas.id = "gameCanvas";
         document.body.appendChild(canvas);
-
-       
-        //document.body.style.height = "100%";
-        //document.body.style.margin = "0;"
-
-        
-
         return canvas;
     }
 }
