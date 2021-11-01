@@ -4,6 +4,7 @@ import "@babylonjs/inspector";
 import 'babylonjs-loaders';
 import * as earcut from 'earcut';
 import { assetController } from "./assetController";
+import { BalloonManager } from "./BalloonManager";
 import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
 
 class App {
@@ -32,7 +33,7 @@ class App {
         this.createTown(scene);
         this.createCar(scene);
         let hotAirBalloon = await this.assetController.loadObject("baloon", "airBalloon.obj", '', scene, engine, new Vector3(.005, .005, .005), new Vector3(0, 5, 0));
-
+        //let balloon = new BalloonManager(scene, engine);
 
         ////
         
@@ -60,7 +61,7 @@ class App {
                     },
                     {
                         frame: 60, 
-                        value: Tools.ToRadians(45)
+                        value: Tools.ToRadians(22.5)
                     })
                     anim.setKeys(baloonKeys);
                     hotAirBalloon.animations = [];
@@ -85,7 +86,7 @@ class App {
 
         engine.runRenderLoop(() => {
             //hotAirBalloon.position.y = hotAirBalloon.position.y + 0.005
-            uniCam.target = hotAirBalloon.position;
+            //uniCam.target = hotAirBalloon.position;
             scene.render();
         });
     }
