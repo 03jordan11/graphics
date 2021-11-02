@@ -8,6 +8,7 @@ import { CameraManager } from "./CameraManager";
 import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager, Light, SceneOptimizerOptions} from "@babylonjs/core";
 import { LightManager } from "./LightController";
 import { GroundManager } from "./GroundManager";
+import { SoundManager } from "./SoundManager";
 
 //DO CAMERA MANAGER
 //DO LIGHTING MANAGER
@@ -21,6 +22,7 @@ class App {
     cameraManager: CameraManager
     lightManager: LightManager
     groundManager: GroundManager
+    soundManager: SoundManager
 
     constructor() {
         this.canvas = this.createCanvas();
@@ -30,6 +32,7 @@ class App {
         this.cameraManager = new CameraManager(this.scene);
         this.lightManager = new LightManager(this.scene);
         this.groundManager = new GroundManager(this.scene);
+        this.soundManager = new SoundManager(this.scene);
 
         this.init(this.engine, this.scene, this.canvas);
     }
@@ -39,11 +42,8 @@ class App {
 
         this.createTown(scene);
         this.createCar(scene);
-    
         this.addInspectorEventListener(scene)
-        let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true, volume: 0.1});
-
-
+        
         engine.runRenderLoop(() => {
             this.cameraManager.setTarget(this.balloonManager.balloon.position);
             scene.render();
@@ -55,6 +55,7 @@ class App {
         await this.cameraManager.init(this.canvas, this.balloonManager.balloon.position);
         await this.lightManager.init();
         await this.groundManager.init();
+        await this.soundManager.init();
     }
 
     createCar(scene: Scene){
