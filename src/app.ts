@@ -7,6 +7,7 @@ import { BalloonManager } from "./BalloonManager";
 import { CameraManager } from "./CameraManager";
 import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager, Light, SceneOptimizerOptions} from "@babylonjs/core";
 import { LightManager } from "./LightController";
+import { GroundManager } from "./GroundManager";
 
 //DO CAMERA MANAGER
 //DO LIGHTING MANAGER
@@ -19,6 +20,7 @@ class App {
     balloonManager: BalloonManager
     cameraManager: CameraManager
     lightManager: LightManager
+    groundManager: GroundManager
 
     constructor() {
         this.canvas = this.createCanvas();
@@ -27,6 +29,7 @@ class App {
         this.balloonManager = new BalloonManager(this.scene, this.engine);
         this.cameraManager = new CameraManager(this.scene);
         this.lightManager = new LightManager(this.scene);
+        this.groundManager = new GroundManager(this.scene);
 
         this.init(this.engine, this.scene, this.canvas);
     }
@@ -34,11 +37,12 @@ class App {
     private async init(engine: Engine, scene: Scene, canvas: HTMLCanvasElement){
         await this.loadManagers();
 
-        let ground = this.createGround(scene);
         this.createTown(scene);
         this.createCar(scene);
     
         this.addInspectorEventListener(scene)
+        let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true, volume: 0.1});
+
 
         engine.runRenderLoop(() => {
             this.cameraManager.setTarget(this.balloonManager.balloon.position);
@@ -50,6 +54,7 @@ class App {
         await this.balloonManager.loadBalloonMesh(this.scene, this.engine);
         await this.cameraManager.init(this.canvas, this.balloonManager.balloon.position);
         await this.lightManager.init();
+        await this.groundManager.init();
     }
 
     createCar(scene: Scene){
@@ -207,7 +212,6 @@ class App {
     }
     createGround(scene: Scene) : Mesh{
         let ground = MeshBuilder.CreateGround('ground', {width: 100, height: 100}, scene);
-        let sound = new Sound("name", "/assets/music/bkgMusic.mp3", scene, null, {loop: true, autoplay: true, volume: 0.1});
 
         let groundMat = new StandardMaterial("groundMat", scene);
         groundMat.diffuseColor = new Color3(0,1,0);
