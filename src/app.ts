@@ -4,44 +4,52 @@ import "@babylonjs/inspector";
 import 'babylonjs-loaders';
 import * as earcut from 'earcut';
 import { BalloonManager } from "./BalloonManager";
-import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
+import { CameraManager } from "./CameraManager";
+import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager, Light, SceneOptimizerOptions} from "@babylonjs/core";
+import { LightManager } from "./LightController";
+
+//DO CAMERA MANAGER
+//DO LIGHTING MANAGER
 
 class App {
+    scene: Scene;
+    engine: Engine;
+    canvas: HTMLCanvasElement;
+
     balloonManager: BalloonManager
+    cameraManager: CameraManager
+    lightManager: LightManager
+
     constructor() {
-        let canvas = this.createCanvas();
+        this.canvas = this.createCanvas();
+        this.engine = new Engine(this.canvas, true);
+        this.scene = new Scene(this.engine);
+        this.balloonManager = new BalloonManager(this.scene, this.engine);
+        this.cameraManager = new CameraManager(this.scene);
+        this.lightManager = new LightManager(this.scene);
 
-        // initialize babylon scene and engine
-        var engine = new Engine(canvas, true);
-        var scene = new Scene(engine);
-        this.balloonManager = new BalloonManager(scene, engine);
-
-        //this.assetController = new assetController(scene)
-        this.init(engine, scene, canvas);
+        this.init(this.engine, this.scene, this.canvas);
     }
 
     private async init(engine: Engine, scene: Scene, canvas: HTMLCanvasElement){
-        await this.balloonManager.loadBalloonMesh(scene, engine);
-
-
-        let uniCam = new UniversalCamera("Universal Camera", new Vector3(10, 6, 1), scene);
-        uniCam.attachControl(canvas, true);
-        uniCam.speed = uniCam.speed/10
-
-        var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
+        await this.loadManagers();
 
         let ground = this.createGround(scene);
         this.createTown(scene);
         this.createCar(scene);
-        
-        uniCam.target = this.balloonManager.balloon.position;
-
+    
         this.addInspectorEventListener(scene)
 
         engine.runRenderLoop(() => {
-            uniCam.target = this.balloonManager.balloon.position;
+            this.cameraManager.setTarget(this.balloonManager.balloon.position);
             scene.render();
         });
+    }
+
+    private async loadManagers(){
+        await this.balloonManager.loadBalloonMesh(this.scene, this.engine);
+        await this.cameraManager.init(this.canvas, this.balloonManager.balloon.position);
+        await this.lightManager.init();
     }
 
     createCar(scene: Scene){
