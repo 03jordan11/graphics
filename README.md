@@ -13,4 +13,5 @@
 - The initial build was done using [THIS](https://doc.babylonjs.com/guidedLearning/createAGame/gettingSetUp) tutorial
 
 # Problems
-- When loading a mesh from an obj file (its the only type ive tested) I cannot aloter the state of the mesh unless I am inside the on success function in the mesh task
+- ~~When loading a mesh from an obj file (its the only type ive tested) I cannot aloter the state of the mesh unless I am inside the on success function in the mesh task~~
+- Animations are not transitioning smoothly from x rotations to z rotations
