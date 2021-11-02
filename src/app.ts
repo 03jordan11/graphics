@@ -3,27 +3,28 @@ import "@babylonjs/inspector";
 //import "@babylonjs/loaders/glTF";
 import 'babylonjs-loaders';
 import * as earcut from 'earcut';
-import { assetController } from "./assetController";
 import { BalloonManager } from "./BalloonManager";
 import { AbstractMesh, Animation, Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, Sound, Tools, StandardMaterial, Color3, Texture, Vector4, UniversalCamera, SceneLoader, AssetsManager} from "@babylonjs/core";
 
 class App {
-    assetController: assetController
+    balloonManager: BalloonManager
     constructor() {
         let canvas = this.createCanvas();
 
         // initialize babylon scene and engine
         var engine = new Engine(canvas, true);
         var scene = new Scene(engine);
+        this.balloonManager = new BalloonManager(scene, engine);
 
-        this.assetController = new assetController(scene)
+        //this.assetController = new assetController(scene)
         this.init(engine, scene, canvas);
     }
 
     private async init(engine: Engine, scene: Scene, canvas: HTMLCanvasElement){
-        
-        let uniCam = new UniversalCamera("Universal Camera", new Vector3(28, 5, 1), scene);
-        uniCam.target = Vector3.Zero();
+        await this.balloonManager.loadBalloonMesh(scene, engine);
+
+
+        let uniCam = new UniversalCamera("Universal Camera", new Vector3(10, 6, 1), scene);
         uniCam.attachControl(canvas, true);
         uniCam.speed = uniCam.speed/10
 
@@ -32,61 +33,13 @@ class App {
         let ground = this.createGround(scene);
         this.createTown(scene);
         this.createCar(scene);
-        let hotAirBalloon = await this.assetController.loadObject("baloon", "airBalloon.obj", '', scene, engine, new Vector3(.005, .005, .005), new Vector3(0, 5, 0));
-        //let balloon = new BalloonManager(scene, engine);
-
-        ////
         
-
+        uniCam.target = this.balloonManager.balloon.position;
 
         this.addInspectorEventListener(scene)
-        // run the main render loop
-        let lastKey = '';
-        document.addEventListener('keydown', (e)=>{
-            
-            if (e.code === 'KeyQ'){
-                hotAirBalloon.position.y += 0.01
-
-            }
-            if (e.code === 'KeyE'){
-                hotAirBalloon.position.y -= 0.01
-            }
-            if (e.code === 'KeyW'){
-                if (lastKey != e.code){
-                    let anim = new Animation('hotAnimation', 'rotation.x', 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT)
-                    let baloonKeys = []
-                    baloonKeys.push({
-                        frame: 0, 
-                        value: 0
-                    },
-                    {
-                        frame: 60, 
-                        value: Tools.ToRadians(22.5)
-                    })
-                    anim.setKeys(baloonKeys);
-                    hotAirBalloon.animations = [];
-                    hotAirBalloon.animations.push(anim);
-                    scene.beginAnimation(hotAirBalloon, 0, 60, false);
-                }
-                hotAirBalloon.position.z += 0.01
-                lastKey = e.code;
-
-            }
-            if (e.code === 'KeyS'){
-                lastKey = e.code;
-                hotAirBalloon.position.z -= 0.01
-            }
-            if (e.code === 'KeyA'){
-                hotAirBalloon.position.x += 0.01
-            }
-            if (e.code === 'KeyD'){
-                hotAirBalloon.position.x -= 0.01
-            }
-        })
 
         engine.runRenderLoop(() => {
-            //hotAirBalloon.position.y = hotAirBalloon.position.y + 0.005
-            //uniCam.target = hotAirBalloon.position;
+            uniCam.target = this.balloonManager.balloon.position;
             scene.render();
         });
     }
