@@ -17,6 +17,7 @@ class App {
     scene: Scene;
     engine: Engine;
     canvas: HTMLCanvasElement;
+    houses: Mesh[];
 
     balloonManager: BalloonManager
     cameraManager: CameraManager
@@ -40,7 +41,7 @@ class App {
     private async init(engine: Engine, scene: Scene, canvas: HTMLCanvasElement){
         await this.loadManagers();
 
-        this.createTown(scene);
+        
         this.createCar(scene);
         this.addInspectorEventListener(scene)
         
@@ -51,7 +52,8 @@ class App {
     }
 
     private async loadManagers(){
-        await this.balloonManager.loadBalloonMesh(this.scene, this.engine);
+        await this.createTown(this.scene);
+        await this.balloonManager.loadBalloonMesh(this.scene, this.engine, this.houses);
         await this.cameraManager.init(this.canvas, this.balloonManager.balloon.position);
         await this.lightManager.init();
         await this.groundManager.init();
@@ -168,14 +170,14 @@ class App {
 
         scene.beginAnimation(wheel,0,30,true);
     }
-    createTown(scene: Scene) {
+    async createTown(scene: Scene) {
 
-        const detached_house = this.createHouse(1, scene);
+        const detached_house = await this.createHouse(1, scene);
         detached_house.rotation.y = -Math.PI / 16;
         detached_house.position.x = -6.8;
         detached_house.position.z = 2.5;
 
-        const semi_house = this.createHouse(2, scene);
+        const semi_house = await this.createHouse(2, scene);
         semi_house .rotation.y = -Math.PI / 16;
         semi_house.position.x = -4.5;
         semi_house.position.z = 3;
@@ -210,6 +212,7 @@ class App {
             houses[i].rotation.y = places[i][1];
             houses[i].position = new Vector3(places[i][2], houses[i].position.y, places[i][3]);
         }
+        this.houses = houses;
     }
     createGround(scene: Scene) : Mesh{
         let ground = MeshBuilder.CreateGround('ground', {width: 100, height: 100}, scene);
@@ -221,14 +224,14 @@ class App {
 
         return ground
     }
-    createHouse(width: number, scene : Scene) : Mesh{
-        let box = this.buildBox(width, scene)
-        let roof = this.buildRoof(width, scene);
+    async createHouse(width: number, scene : Scene) : Promise<Mesh>{
+        let box = await this.buildBox(width, scene)
+        let roof = await this.buildRoof(width, scene);
         let house = Mesh.MergeMeshes([box, roof], true, false, null, false, true);
         
         return house;
     }
-    buildBox(width: number, scene: Scene) : Mesh{
+    async buildBox(width: number, scene: Scene) : Promise<Mesh>{
         let faceUV = []
         if(width == 2){
             faceUV[0] = new Vector4(0.6, 0.0, 1.0, 1.0);
@@ -257,7 +260,7 @@ class App {
         box.material = boxMat;
         return box;
     }
-    buildRoof(width: number, scene: Scene) : Mesh{
+    async buildRoof(width: number, scene: Scene) : Promise<Mesh>{
         let roof = MeshBuilder.CreateCylinder("roof", {diameter: 1.3, height: 1.2, tessellation: 3});
         
         roof.scaling = new Vector3(0.75, width, 1);

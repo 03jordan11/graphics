@@ -15,7 +15,7 @@ export class BalloonManager{
         this.scene = scene;
     }
 
-    async loadBalloonMesh(scene: Scene, engine: Engine){
+    async loadBalloonMesh(scene: Scene, engine: Engine, houses: Mesh[]){
         let balloon = await SceneLoader.ImportMeshAsync(null, '/assets/models/', 'airBalloon.obj', scene);
         let parentBalloon = balloon.meshes[0];
         for(let i = 1; i < balloon.meshes.length; i++){
@@ -26,7 +26,7 @@ export class BalloonManager{
         parentBalloon.position = new Vector3(0, 7, 0);
         
         this.balloon = parentBalloon;
-        this.addMovement();
+        this.addMovement(houses);
     }
 
     animateBalloon(degrees: number = 0, target: string){
@@ -44,49 +44,60 @@ export class BalloonManager{
         this.scene.beginAnimation(this.balloon, 0, 60, false);
     }
 
-    addMovement(){
+    addMovement(houses: Mesh[]){
         let lastKey = '';
         document.addEventListener('keyup', (e)=>{
             this.scene.stopAnimation(this.balloon);
         })
         document.addEventListener('keydown', (e)=>{
+            //if this.balloon is colliding with a house, don't move
+            let colliding = false;
+            for(let i = 0; i < houses.length; i++){
+                if(this.balloon.intersectsMesh(houses[i], false)){
+                    colliding = true;
+                    break;
+                }
+            }
+            if (!colliding){
+                if (e.code === 'KeyQ'){
+                    this.balloon.position.y += 0.01
+                    lastKey = e.code;
+                }
+                if (e.code === 'KeyE'){
+                    this.balloon.position.y -= 0.01
+                    lastKey = e.code;
+                }
+                if (e.code === 'KeyW'){
+                    if (lastKey != e.code){
+                        this.animateBalloon(22.5, 'rotation.x');
+                    }
+                    this.balloon.position.z += 0.01
+                    lastKey = e.code;
+                }
+                if (e.code === 'KeyS'){
+                    if (lastKey != e.code){
+                        this.animateBalloon(-22.5, 'rotation.x');
+                    }
+                    this.balloon.position.z -= 0.01;
+                    lastKey = e.code;
+                }
+                if (e.code === 'KeyA'){
+                    if (lastKey != e.code){
+                        this.animateBalloon(-22.5, 'rotation.z');
+                    }
+                    this.balloon.position.x += 0.01
+                    lastKey = e.code;
+                }
+                if (e.code === 'KeyD'){
+                    if (lastKey != e.code){
+                        this.animateBalloon(22.5, 'rotation.z');
+                    }
+                    this.balloon.position.x -= 0.01
+                    lastKey = e.code;
+                }
+            }
             
-            if (e.code === 'KeyQ'){
-                this.balloon.position.y += 0.01
-                lastKey = e.code;
-            }
-            if (e.code === 'KeyE'){
-                this.balloon.position.y -= 0.01
-                lastKey = e.code;
-            }
-            if (e.code === 'KeyW'){
-                if (lastKey != e.code){
-                    this.animateBalloon(22.5, 'rotation.x');
-                }
-                this.balloon.position.z += 0.01
-                lastKey = e.code;
-            }
-            if (e.code === 'KeyS'){
-                if (lastKey != e.code){
-                    this.animateBalloon(-22.5, 'rotation.x');
-                }
-                this.balloon.position.z -= 0.01;
-                lastKey = e.code;
-            }
-            if (e.code === 'KeyA'){
-                if (lastKey != e.code){
-                    this.animateBalloon(-22.5, 'rotation.z');
-                }
-                this.balloon.position.x += 0.01
-                lastKey = e.code;
-            }
-            if (e.code === 'KeyD'){
-                if (lastKey != e.code){
-                    this.animateBalloon(22.5, 'rotation.z');
-                }
-                this.balloon.position.x -= 0.01
-                lastKey = e.code;
-            }
         })
     }
+
 }
